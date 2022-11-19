@@ -4,9 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec #Condiciones de sepera
 import pandas as pd
-import json
+from datetime import datetime
 
-from bs4 import BeautifulSoup # Parse Selenium to HTML
+from src.utils.is_in_dictionary import IsInDictionary
 
 
 #driver = webdriver.Chrome()
@@ -37,108 +37,70 @@ WebDriverWait(driver, 40).until(ec.visibility_of_all_elements_located((By.CSS_SE
 
 elements_mails = driver.find_elements(By.CSS_SELECTOR, '.hcptT')
 
-print(elements_mails.count)
-
-
-mails = [{
-    'author': '',
-    'title':'',
-    'subject':''
-}]
-
-
+limitDate = datetime(2022,11,7,6,0,0)
+mails =[{}]
 
 cont = 0
 for element in elements_mails:
 
     cont += 1
-    print(cont)
+    print(f'============= CORREO {cont} ================')
+    #print(element.text)
 
     # Extract 
 
-    """author = element.find_element(By.CSS_SELECTOR,'.gMkyO')
-    title = element.find_element(By.CSS_SELECTOR,'.IjzWp')
-    subject = element.find_element(By.CSS_SELECTOR,'.FqgPc')
+    dataHeader = element.find_elements(By.CSS_SELECTOR,'.Ejrkd')
+    author = dataHeader[0].text # author
+    title = dataHeader[1].text # title
+    date = dataHeader[2].text # date
+    subject = dataHeader[3].text # subject
+
 
     mails.append([
-    { 'author': author.text,
-    'title':title.text,
-    'subject': subject.text}
+    { 'author': author,
+    'title':title,
+    'subject': subject}
     ])
 
-    print(author.text + '\t')
-    print(title.text + '\t')
-    print(subject.text + '\t')"""
-    print('########### INICIANDO BUSQUEDA DE TABLAS ######## \t')
-   
+       
     # Into mail
 
     element.click()
+    """
+    !PROBLEMA
+    p1: Si ingresa en cada correo, podría encontrar TABLAS innecesarias
+    s1: Convertir todo el correo en relación a los SELECTORES y convertirlos en TEXTO, y buscar 
+    palabras claves de un DICCIONARIO predefinido.
+    """
 
   
     wait = WebDriverWait(driver, 30).until(ec.visibility_of_element_located((By.CSS_SELECTOR, '.MtujV .L72vd')))
-
-    #Tables
-    #tables = driver.find_elements(By.CSS_SELECTOR,'.MtujV .L72vd table')
-    tableHtml_toParse = driver.find_element(By.CSS_SELECTOR,'.MtujV .L72vd table').get_attribute('outerHTML')
-
-    #print(tableHtml_toParse)
-   
-   
-    #pdParseHtml =  BeautifulSoup(tableHtml_toParse, 'html.parser')
-
-    #df_table = pd.read_html(str(pdParseHtml))
-    tableHtml_toParse = """
-    <table>
-    <thead>
-        <tr>
-        <th>date</th>
-        <th>name</th>
-        <th>year</th>
-        <th>cost</th>
-        <th>region</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-        <td>2020-01-01</td>
-        <td>Jenny</td>
-        <td>1998</td>
-        <td>0.2</td>
-        <td>South</td>
-        </tr>
-        <tr>
-        <td>2020-01-02</td>
-        <td>Alice</td>
-        <td>1992</td>
-        <td>-1.34</td>
-        <td>East</td>
-        </tr>
-        <tr>
-        <td>2020-01-03</td>
-        <td>Tomas</td>
-        <td>1982</td>
-        <td>1.00023</td>
-        <td>South</td>
-        </tr>
-    </tbody>
-    </table>
-    """
-
-    data = BeautifulSoup(tableHtml_toParse, 'html.parser')
+  
+    textHtml = driver.find_element(By.CSS_SELECTOR,'.MtujV .L72vd').text
     
-    df_table = pd.read_html(tableHtml_toParse)
- 
+    print(IsInDictionary(textHtml).code('A1'))
+    if(IsInDictionary(textHtml).code('A1') == False):
+        continue
+
+    print('### INICIANDO BUSQUEDA DE TABLAS ### \t')
+  
+    #Tables
+    try: 
+        # !! PREVEEER QUE PUEDEN HABER 2 TABLAS EN UN CORREO
+        tableHtml = driver.find_element(By.CSS_SELECTOR,'.MtujV .L72vd table').get_attribute('outerHTML')
+        df_table = pd.read_html(tableHtml)[0]
+        print('Si tiene Tablas')
+        #print(df_table)
+
+    except:
+        print('No tiene Tablas')
  
     #for table in tables:
     #    print(table.text)
-        
-    df_table[0]
-  
-    print('########### FIN  ######## \t')
+    
+    print('### FIN  ### \t')
     if (cont == 6):
         break
         
 
-    time.sleep(10)
-    break
+time.sleep(20)
