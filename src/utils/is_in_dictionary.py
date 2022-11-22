@@ -17,8 +17,7 @@ class IsInDictionary:
         
         anyEqualityFound = False
         for value in aDictionary:
-            if(str_text.find(value) != 1):
-                print(value)
+            if(str_text.lower().find(value.lower()) != -1):
                 anyEqualityFound = True
                 break
 

@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 
 from src.utils.is_in_dictionary import IsInDictionary
-
+from src.utils.df_cmbd import DfCMBD
 
 #driver = webdriver.Chrome()
 driver = webdriver.Edge()
@@ -38,9 +38,10 @@ WebDriverWait(driver, 40).until(ec.visibility_of_all_elements_located((By.CSS_SE
 elements_mails = driver.find_elements(By.CSS_SELECTOR, '.hcptT')
 
 limitDate = datetime(2022,11,7,6,0,0)
-mails =[{}]
 
+mails = [{}]
 cont = 0
+
 for element in elements_mails:
 
     cont += 1
@@ -49,11 +50,11 @@ for element in elements_mails:
 
     # Extract 
 
-    dataHeader = element.find_elements(By.CSS_SELECTOR,'.Ejrkd')
-    author = dataHeader[0].text # author
-    title = dataHeader[1].text # title
-    date = dataHeader[2].text # date
-    subject = dataHeader[3].text # subject
+    emailHeaderData = element.find_elements(By.CSS_SELECTOR,'.Ejrkd')
+    author = emailHeaderData[0].text # author
+    title = emailHeaderData[1].text # title
+    date = emailHeaderData[2].text # date
+    subject = emailHeaderData[3].text # subject
 
 
     mails.append([
@@ -61,8 +62,7 @@ for element in elements_mails:
     'title':title,
     'subject': subject}
     ])
-
-       
+      
     # Into mail
 
     element.click()
@@ -74,11 +74,17 @@ for element in elements_mails:
     """
 
   
-    wait = WebDriverWait(driver, 30).until(ec.visibility_of_element_located((By.CSS_SELECTOR, '.MtujV .L72vd')))
+    # .MtujV .L72vd => Todo el relleno del correo
+    # .AL_OM => Hora del correo
+    wait = WebDriverWait(driver, 30).until(ec.visibility_of_element_located((By.CSS_SELECTOR, '.MtujV .L72vd .AL_OM' )))
   
     textHtml = driver.find_element(By.CSS_SELECTOR,'.MtujV .L72vd').text
-    
-    print(IsInDictionary(textHtml).code('A1'))
+    hora_sf = driver.find_element(By.CSS_SELECTOR,'.AL_OM' ).text
+    horadt = datetime.strptime(hora_sf[4:len(hora_sf)], '%d/%m/%Y %H:%M')
+
+    # Condicionales de busqueda 
+    # ! Tener en cuenta que podriamos usar solo el TITULO y el ASUNTO y no TODO EL CONTENIDO esto por rendimiento
+
     if(IsInDictionary(textHtml).code('A1') == False):
         continue
 
@@ -89,7 +95,19 @@ for element in elements_mails:
         # !! PREVEEER QUE PUEDEN HABER 2 TABLAS EN UN CORREO
         tableHtml = driver.find_element(By.CSS_SELECTOR,'.MtujV .L72vd table').get_attribute('outerHTML')
         df_table = pd.read_html(tableHtml)[0]
-        print('Si tiene Tablas')
+        df_table = df_table.rename(columns=df_table.iloc[0]).drop(df_table.index[0]) #Corrigiendo la cabecera de la tabla
+     
+
+     
+        df_date_append = pd.DataFrame({"Categoria":[datetime.today().strftime('%Y-%m-%d %H:%M:%S')]})
+
+        a = DfCMBD()
+        a.append_df(df_date_append)
+        a.append_df(df_table)
+        a.show()
+       
+
+        #dfa.to_excel('aaaa.xlsx')
         #print(df_table)
 
     except:

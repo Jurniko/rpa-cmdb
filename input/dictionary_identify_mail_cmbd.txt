@@ -1,1 +1,4 @@
-zzz
+alta
+servidor virtual
+servidor físico
+sevidor clon

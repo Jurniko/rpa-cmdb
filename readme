@@ -1,0 +1,7 @@
+
+Importar lo sguiente
+
+
+pip install unicode
+pip install openpyxl
+pip install xlrd
